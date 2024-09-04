@@ -1,6 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:music_app/data/model/song.dart';
 import 'package:music_app/ui/home/view_model.dart';
+import 'package:music_app/ui/playing_song/playing.dart';
 
 class HomeTab extends StatelessWidget {
   const HomeTab({super.key});
@@ -24,16 +26,17 @@ class _HomeTabPageState extends State<HomeTabPage> {
 
   @override
   void initState() {
+    super.initState();
+
     _viewModel = MusicAppViewModel();
     _viewModel.loadSongs();
     observeData();
-    super.initState();
   }
 
   @override
   void dispose() {
-    _viewModel.songStream.close();
     super.dispose();
+    _viewModel.songStream.close();
   }
 
   void observeData() {
@@ -74,9 +77,42 @@ class _HomeTabPageState extends State<HomeTabPage> {
     );
   }
 
+  void navigateTo(Song item) {
+    Navigator.push(context, CupertinoPageRoute(builder: (context) {
+      return PlayingSong(songs: _songs, playingSong: item);
+    }));
+  }
+
+  void showBottomSheet(Song item) {
+    showModalBottomSheet(
+        context: context,
+        builder: (context) {
+          return ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child: Container(
+              height: 400,
+              color: Colors.white,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    const Text("Modal bottom sheet"),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("Close"),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          );
+        });
+  }
+
   Widget getRowItem(BuildContext context, int position) {
     return Center(
-      child: Text(_songs.elementAt(position).title),
+      child: _SongItemSection(song: _songs[position], parent: this),
     );
   }
 
@@ -85,12 +121,41 @@ class _HomeTabPageState extends State<HomeTabPage> {
   }
 }
 
-class _SongItemSection {
-  _SongItemSection({
+class _SongItemSection extends StatelessWidget {
+  const _SongItemSection({
     required this.song,
     required this.parent,
   });
 
   final Song song;
   final _HomeTabPageState parent;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: const EdgeInsets.only(left: 24, right: 8),
+      leading: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: FadeInImage.assetNetwork(
+          width: 48,
+          height: 48,
+          image: song.image,
+          placeholder: 'assets/itunes_logo.png',
+          imageErrorBuilder: (context, error, stackTrace) {
+            return Image.asset("assets/itunes_logo.png", width: 48, height: 48);
+          },
+        ),
+      ),
+      title: Text(song.title),
+      subtitle: Text(song.artist),
+      trailing: IconButton(
+          onPressed: () {
+            parent.showBottomSheet(song);
+          },
+          icon: const Icon(Icons.more_horiz)),
+      onTap: () {
+        parent.navigateTo(song);
+      },
+    );
+  }
 }
