@@ -14,7 +14,7 @@ class DurationState {
 }
 
 class AudioPlayerManager {
-  final String songUrl;
+  late String songUrl;
   AudioPlayer? audioPlayer;
   Stream<DurationState>? durationState;
 
@@ -33,5 +33,11 @@ class AudioPlayerManager {
 
   void dispose() {
     audioPlayer?.dispose();
+  }
+
+  void updateSongUrl(String url) {
+    dispose();
+    songUrl = url;
+    init();
   }
 }
